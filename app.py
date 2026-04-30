@@ -96,6 +96,8 @@ st.markdown('<div class="sub-header">AI-Powered Recommendation Engine for Indian
 if 'pipeline' not in st.session_state:
     with st.spinner("Initializing AI Retrieval Engine..."):
         try:
+            # Ensure the API key is set in the environment for the session
+            os.environ["GROQ_API_KEY"] = os.getenv("GROQ_API_KEY")
             st.session_state.pipeline = BISRAGPipeline()
         except Exception as e:
             st.error(f"Failed to initialize engine: {e}")
