@@ -1,7 +1,12 @@
 import streamlit as st
 import time
 import json
+import os
+from dotenv import load_dotenv
 from src.rag_pipeline import BISRAGPipeline
+
+# Load environment variables from .env
+load_dotenv()
 
 # Page configuration for a professional look
 st.set_page_config(
