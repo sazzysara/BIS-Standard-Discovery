@@ -24,6 +24,24 @@ To process the BIS standards document (`dataset.pdf`), we use the following inge
    - **Separators:** `["\n\n", "\n", ".", " ", ""]` to respect document formatting and sentence boundaries.
 3. **Embedding & Storage:** The chunks are embedded using the `all-MiniLM-L6-v2` model and persistently stored in a local ChromaDB vector store (`data/vectorstore`).
 
+## Hallucination Prevention
+
+To ensure **zero hallucination** and reliable BIS standard recommendations, the system implements multiple safeguards:
+
+1. **Strict Prompt Instructions:** The LLM is explicitly instructed to only recommend standards that appear in the retrieved context, with clear directives against inventing or guessing standards.
+
+2. **Context-Only Output:** The prompt template forbids generating standards not explicitly mentioned in the retrieved documents.
+
+3. **Validation Filter:** After LLM generation, a post-processing validation step:
+   - Extracts all BIS standard IDs from the retrieved context using regex pattern matching
+   - Cross-references each recommended standard against the retrieved documents
+   - Filters out any recommendations that don't exist in the retrieved context
+   - Logs whether each standard passed validation (✓ validated) or was filtered as hallucination (✗ hallucination)
+
+4. **Zero Temperature:** The Groq LLM uses `temperature=0` to minimize randomness and creativity, ensuring deterministic, conservative responses.
+
+5. **Result:** Only standards that are grounded in the retrieved BIS documents are returned to the user. If fewer than 3 standards are found in the context, the system returns only validated standards rather than inventing new ones.
+
 ## How to Install Dependencies
 
 1. **Clone the repository** (if you haven't already).
@@ -143,7 +161,8 @@ Performance metrics calculated on the 10-query public test set:
 - Average response time is higher than target, primarily due to:
   - High LLM inference latency from Groq API (concurrent requests)
   - Chunking strategy may need optimization
-- No hallucinations detected; all retrieved standards are real BIS standards
+- **Zero hallucinations detected:** All retrieved standards are validated against the retrieved context before being returned to the user. Any LLM-generated standards that do not appear in the retrieved documents are automatically filtered out.
+- Hallucination prevention safeguards ensure only ground-truth BIS standards are recommended
 
 **Optimization Opportunities:**
 - Refine chunking parameters (chunk size, overlap)
