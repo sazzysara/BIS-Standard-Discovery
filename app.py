@@ -99,6 +99,8 @@ if 'pipeline' not in st.session_state:
             # Ensure the API key is set in the environment for the session
             os.environ["GROQ_API_KEY"] = os.getenv("GROQ_API_KEY")
             st.session_state.pipeline = BISRAGPipeline()
+            # Pre-warm retriever to avoid cold-start latency on first user query
+            st.session_state.pipeline.warm_up_retriever()
         except Exception as e:
             st.error(f"Failed to initialize engine: {e}")
 
@@ -126,6 +128,12 @@ with col2:
             latency = time.time() - start_time
             
             if recommendations:
+                # Show which path produced the recommendation if available
+                match_info = getattr(st.session_state.pipeline, "last_fallback", None)
+                if match_info:
+                    st.success(f"Matched by fallback: {match_info}")
+                else:
+                    st.info("Matched by retriever + LLM")
                 st.markdown(f'<div class="metric-box">⏱️ Latency: {latency:.2f} seconds</div>', unsafe_allow_html=True)
                 for rec in recommendations:
                     st.markdown(f"""
