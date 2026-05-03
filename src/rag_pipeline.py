@@ -55,27 +55,28 @@ JSON output:
 
     def _extract_standards_from_context(self, docs):
         """Extract all BIS standard IDs present in retrieved documents for validation."""
-        standards_in_context = set()
-        pattern = r'IS\s*\d+[\w\s:()]*'  # Match patterns like "IS 269: 1989"
+        standards_in_context = []
         
         for doc in docs:
             text = doc.page_content if hasattr(doc, 'page_content') else str(doc)
-            # Find all potential standard IDs in the context
-            matches = re.findall(pattern, text, re.IGNORECASE)
-            for match in matches:
-                # Normalize for comparison
-                normalized = re.sub(r'\s+', '', match.lower())
-                standards_in_context.add(normalized)
+            standards_in_context.append(text.lower())
         
         return standards_in_context
 
-    def _validate_recommendation(self, standard_id, context_standards):
-        """Check if a recommended standard actually exists in retrieved context."""
-        normalized_rec = re.sub(r'\s+', '', str(standard_id).lower())
+    def _validate_recommendation(self, standard_id, context_texts):
+        """Check if a recommended standard appears in retrieved context text."""
+        standard_normalized = str(standard_id).lower().strip()
         
-        # Check exact match
-        for context_std in context_standards:
-            if normalized_rec in context_std or context_std in normalized_rec:
+        # Check if the standard ID appears in any of the retrieved documents
+        for context_text in context_texts:
+            # Use multiple matching strategies for robustness
+            if standard_normalized in context_text:
+                return True
+            
+            # Also try matching without spaces/special chars for partial matches
+            standard_cleaned = re.sub(r'\s+', '', standard_normalized)
+            context_cleaned = re.sub(r'\s+', '', context_text)
+            if standard_cleaned in context_cleaned:
                 return True
         
         return False
@@ -86,9 +87,9 @@ JSON output:
             docs = self.retriever.get_relevant_documents(description)
             self.retrieved_docs = docs
             
-            # Extract standards that actually exist in retrieved context
-            context_standards = self._extract_standards_from_context(docs)
-            print(f"Standards found in retrieved context: {len(context_standards)}")
+            # Extract context as raw text for validation
+            context_texts = self._extract_standards_from_context(docs)
+            print(f"Retrieved {len(docs)} documents from context")
             
             response = self.chain.invoke(description)
             
@@ -108,14 +109,14 @@ JSON output:
             validated_recommendations = []
             for rec in recommendations:
                 standard_id = rec.get("standard_id", "")
-                if self._validate_recommendation(standard_id, context_standards):
+                if self._validate_recommendation(standard_id, context_texts):
                     validated_recommendations.append(rec)
                     print(f"✓ Validated: {standard_id}")
                 else:
                     print(f"✗ Filtered out hallucination: {standard_id}")
             
             if len(validated_recommendations) == 0:
-                print("Warning: No validated recommendations found after filtering hallucinations")
+                print("⚠ Warning: No validated recommendations found after filtering hallucinations")
             
             return validated_recommendations
             
