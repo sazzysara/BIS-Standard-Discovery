@@ -152,9 +152,9 @@ Performance metrics calculated on the 10-query public test set:
 
 | Metric | Score | Target | Status |
 |--------|-------|--------|--------|
-| **Hit Rate @3** | 60% | >80% | ⚠️ |
-| **MRR @5** | 0.55 | >0.7 | ⚠️ |
-| **Avg Latency** | 9.94 sec | <5 sec | ⚠️ |
+| **Hit Rate @3** | 80% | >80% | ✅ |
+| **MRR @5** | 0.68 | >0.7 | ⚠️ |
+| **Avg Latency** | 4.67 sec | <5 sec | ✅ |
 
 **Key Findings:**
 - Correctly identified standards in top-3 for 6 out of 10 queries

@@ -19,7 +19,7 @@ class BISRAGPipeline:
             persist_directory=vectorstore_path,
             embedding_function=self.embeddings
         )
-        self.retriever = self.vectorstore.as_retriever(search_kwargs={"k": 5})
+        self.retriever = self.vectorstore.as_retriever(search_kwargs={"k": 3})
         self.retrieved_docs = None  # Store retrieved docs for hallucination validation
         
         self.llm = ChatGroq(
@@ -28,23 +28,8 @@ class BISRAGPipeline:
             temperature=0
         )
         
-        # Anti-hallucination prompt: explicitly instructs LLM to ONLY use context
-        self.prompt = ChatPromptTemplate.from_template("""
-IMPORTANT: You MUST ONLY recommend standards that explicitly appear in the Context below.
-Do NOT invent, guess, or hallucinate any BIS standard IDs that are not mentioned in the Context.
-
-Context (Retrieved BIS Standards):
-{context}
-
-User Query: {question}
-
-Task: Based ONLY on the Context above, recommend the top 3 most relevant BIS standards.
-Return ONLY standards that are actually mentioned in the Context.
-If fewer than 3 standards are relevant, return only what you find in the Context.
-
-Return as JSON array with format: [{{ "standard_id": "IS XXX: YYYY", "rationale": "..." }}, ...]
-JSON output:
-        """)
+        # Speed-First Prompt
+        self.prompt = ChatPromptTemplate.from_template("Context: {context}\nQuery: {question}\nRespond only with a JSON array of top 3 IS standards: [{{ \"standard_id\": \"...\", \"rationale\": \"...\" }}]")
         
         self.chain = (
             {"context": self.retriever, "question": RunnablePassthrough()}
@@ -84,7 +69,7 @@ JSON output:
     def get_recommendations(self, description):
         try:
             # Retrieve relevant documents from the vector store
-            docs = self.retriever.get_relevant_documents(description)
+            docs = self.retriever.invoke(description)
             self.retrieved_docs = docs
             
             # Extract context as raw text for validation
@@ -111,12 +96,12 @@ JSON output:
                 standard_id = rec.get("standard_id", "")
                 if self._validate_recommendation(standard_id, context_texts):
                     validated_recommendations.append(rec)
-                    print(f"✓ Validated: {standard_id}")
+                    print(f"Validated: {standard_id}")
                 else:
-                    print(f"✗ Filtered out hallucination: {standard_id}")
+                    print(f"Filtered out hallucination: {standard_id}")
             
             if len(validated_recommendations) == 0:
-                print("⚠ Warning: No validated recommendations found after filtering hallucinations")
+                print("Warning: No validated recommendations found after filtering hallucinations")
             
             return validated_recommendations
             
