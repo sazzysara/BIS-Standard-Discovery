@@ -40,9 +40,13 @@ class BISRAGPipeline:
     def warm_up_retriever(self):
         """Pre-initialize retriever to avoid cold-start latency on first query."""
         try:
-            _ = self._get_retriever().invoke("test query")
-        except Exception:
-            pass
+            # Force full initialization: get embeddings, vectorstore, and retriever
+            retriever = self._get_retriever()
+            # Execute a real query to load embeddings and LLM models
+            _ = retriever.invoke("cement concrete standard")
+            print("✓ Pipeline warm-up complete: Embeddings and retriever ready")
+        except Exception as e:
+            print(f"⚠ Warm-up warning (non-critical): {str(e)}")
 
     def _keyword_fallback(self, description):
         text = (description or "").lower()

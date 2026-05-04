@@ -33,7 +33,13 @@ pipeline = BISRAGPipeline()
 
 @app.on_event("startup")
 async def warm_up_pipeline():
-    await asyncio.to_thread(pipeline.warm_up_retriever)
+    """Pre-load embeddings and retriever on startup to reduce first query latency."""
+    print("🚀 Starting FastAPI server with pipeline warm-up...")
+    try:
+        await asyncio.to_thread(pipeline.warm_up_retriever)
+        print("✓ Server startup complete: Pipeline ready for requests")
+    except Exception as e:
+        print(f"⚠ Warm-up encountered an issue: {e}")
 
 # Request/Response models
 class DiscoverRequest(BaseModel):
