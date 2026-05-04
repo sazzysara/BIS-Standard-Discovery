@@ -12,3 +12,11 @@ INFO:     127.0.0.1:54733 - "POST /api/discover HTTP/1.1" 200 OK
 INFO:     127.0.0.1:55576 - "POST /api/discover HTTP/1.1" 200 OK
 INFO:     127.0.0.1:55576 - "POST /api/discover HTTP/1.1" 200 OK
 INFO:     127.0.0.1:55576 - "POST /api/discover HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60065 - "OPTIONS /api/discover HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60065 - "POST /api/discover HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58223 - "OPTIONS /api/discover HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58223 - "POST /api/discover HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59631 - "POST /api/discover HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50520 - "OPTIONS /api/discover HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50520 - "POST /api/discover HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50584 - "POST /api/discover HTTP/1.1" 200 OK
