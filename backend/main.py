@@ -11,6 +11,7 @@ import json
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.rag_pipeline import BISRAGPipeline
+from typing import Optional
 
 app = FastAPI(
     title="BIS Standard Discovery API",
@@ -27,19 +28,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize pipeline globally
-pipeline = BISRAGPipeline()
+# Lazy pipeline: avoid heavy imports/initialization at module import time
+pipeline: Optional[BISRAGPipeline] = None
 
 
 @app.on_event("startup")
-async def warm_up_pipeline():
-    """Pre-load embeddings and retriever on startup to reduce first query latency."""
-    print("🚀 Starting FastAPI server with pipeline warm-up...")
+async def create_and_warm_pipeline():
+    """Create the pipeline on startup and warm it up to avoid cold-start latency."""
+    global pipeline
+    print("🚀 FastAPI startup: initializing pipeline...")
     try:
+        pipeline = BISRAGPipeline()
+        # run warm-up in a thread to avoid blocking the event loop
         await asyncio.to_thread(pipeline.warm_up_retriever)
-        print("✓ Server startup complete: Pipeline ready for requests")
+        print("✓ Pipeline initialized and warmed up")
     except Exception as e:
-        print(f"⚠ Warm-up encountered an issue: {e}")
+        # log the error; pipeline will remain None and endpoints should return 503
+        pipeline = None
+        print(f"⚠ Pipeline initialization failed on startup: {e}")
 
 # Request/Response models
 class DiscoverRequest(BaseModel):
@@ -75,13 +81,17 @@ async def discover_standards(request: DiscoverRequest):
         raise HTTPException(status_code=400, detail="Description cannot be empty")
     
     try:
+        # Ensure pipeline was initialized successfully
+        if pipeline is None:
+            raise HTTPException(status_code=503, detail="Service unavailable: pipeline not initialized")
+
         start_time = time.time()
         recommendations = pipeline.get_recommendations(request.description)
         latency = time.time() - start_time
-        
+
         # Determine if matched by fallback
         matched_by = "Fallback (Deterministic)" if pipeline.last_fallback else "Retriever + LLM"
-        
+
         return DiscoverResponse(
             recommendations=[
                 StandardRecommendation(**rec) for rec in recommendations
