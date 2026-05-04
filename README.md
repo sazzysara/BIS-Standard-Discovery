@@ -6,13 +6,22 @@ This project addresses the challenge Micro and Small Enterprises (MSEs) face in 
 
 ## System Architecture Overview
 
-The application utilizes a Retrieval-Augmented Generation (RAG) architecture:
-- **Frontend / UI:** Streamlit (Python) for an interactive, professional web interface.
-- **Orchestration:** LangChain to connect the retriever, prompts, and the LLM.
-- **Vector Database:** ChromaDB for local, fast semantic search.
-- **Embeddings Model:** HuggingFace `all-MiniLM-L6-v2` for generating embeddings.
-- **LLM:** Llama 3.1 8B (Instant) hosted via the Groq API for ultra-fast inference and rationale generation.
-- **Document Parsing:** PyMuPDF (`fitz`) to extract text from the original BIS dataset.
+The application utilizes a modern **full-stack Retrieval-Augmented Generation (RAG)** architecture:
+
+**Frontend:**
+- **React.js** with Node.js runtime for a responsive, production-grade UI
+- **Axios** for HTTP API communication
+- **CSS3** with gradient design and smooth animations
+- Deployed on **Vercel** for fast, global CDN delivery
+
+**Backend:**
+- **FastAPI** (Python) REST API server
+- **LangChain** to orchestrate retriever, prompts, and LLM integration
+- **ChromaDB** for local, fast semantic search
+- **HuggingFace `all-MiniLM-L6-v2`** for semantic embeddings
+- **Groq Llama 3.1 8B (Instant)** for ultra-fast inference & rationale generation
+- **PyMuPDF** (`fitz`) for PDF parsing
+- Deployed on **Render** with persistent Python environment
 
 ## Data Ingestion & Chunking Strategy
 
@@ -62,42 +71,96 @@ To ensure **zero hallucination** and reliable BIS standard recommendations, the 
 
 ## How to Run the App Locally
 
-1. **Data Ingestion (First-time setup only):**
-   Before running the app, you need to process the PDF dataset into the vector store. Ensure `dataset.pdf` is in the root directory and run:
-   ```bash
-   python src/ingest.py
-   ```
-   *This will create a `data/vectorstore` directory.*
+### Backend Setup (FastAPI)
 
-2. **Run the Streamlit Application:**
-   Once the vector store is ready, start the application:
+1. **Install Python dependencies:**
    ```bash
-   streamlit run app.py
+   pip install -r requirements.txt
+   pip install -r backend/requirements.txt
    ```
-   The application will automatically open in your default web browser.
+
+2. **Set environment variables:**
+   Create a `.env` file in the root directory:
+   ```env
+   GROQ_API_KEY=your_api_key_here
+   ```
+
+3. **Start the FastAPI server:**
+   ```bash
+   cd backend
+   python -m uvicorn main:app --host 0.0.0.0 --port 8000
+   ```
+   Backend will be available at `http://localhost:8000`
+   Interactive API docs: `http://localhost:8000/docs`
+
+### Frontend Setup (React)
+
+1. **Install Node.js dependencies:**
+   ```bash
+   cd frontend
+   npm install
+   ```
+
+2. **Start the React development server:**
+   ```bash
+   npm start
+   ```
+   Frontend will open at `http://localhost:3000`
+
+### Access the Application
+
+- **Frontend:** http://localhost:3000
+- **API Docs:** http://localhost:8000/docs
+- **Health Check:** http://localhost:8000/health
 
 ## Project Structure
 
 ```
-.
-├── app.py                          # Streamlit UI application
-├── inference.py                    # Entry-point script for judges (--input/--output)
-├── eval_script.py                  # Mandatory evaluation script for metrics
-├── requirements.txt                # Python dependencies
-├── dataset.pdf                     # Original BIS standards dataset
-├── public_test_set.json            # 10 sample queries for validation
-├── team_results.json               # Results from evaluation on public test set
-├── BIS_Project_Presentation_Details.md  # Presentation notes
+BIS-Standard-Discovery/
 ├── README.md                       # This file
+├── DEPLOYMENT.md                   # Deployment guide for Vercel + Render
+├── requirements.txt                # Python dependencies (core RAG stack)
+├── .env                            # Environment variables (GROQ_API_KEY)
+├── .git/                           # Git repository
 │
-├── src/
-│   ├── ingest.py                   # PDF ingestion & chunking pipeline
-│   └── rag_pipeline.py             # RAG pipeline (retriever + LLM orchestration)
+├── backend/                        # FastAPI Server (Python)
+│   ├── main.py                     # FastAPI application entry point
+│   ├── requirements.txt            # Backend-specific dependencies
+│   ├── README.md                   # Backend setup guide
+│   └── uvicorn.*.log               # Runtime logs
 │
-└── data/
-    └── vectorstore/                # ChromaDB persistent vector database
-        ├── chroma.sqlite3
-        └── [embedding collections]
+├── frontend/                       # React Application (Node.js)
+│   ├── package.json                # NPM dependencies & scripts
+│   ├── package-lock.json
+│   ├── README.md                   # Frontend setup guide
+│   ├── public/
+│   │   └── index.html              # HTML entry point
+│   └── src/
+│       ├── App.js                  # Main React component
+│       ├── App.css                 # Global styles
+│       ├── index.js                # React DOM render
+│       ├── index.css
+│       └── components/
+│           ├── DiscoverForm.js     # Input form component
+│           ├── ResultsDisplay.js   # Results container
+│           ├── StandardCard.js     # Individual standard card
+│           ├── LoadingSpinner.js   # Loading indicator
+│           └── [*.css]             # Component-specific styles
+│
+├── src/                            # RAG Pipeline (Python)
+│   ├── rag_pipeline.py             # Core RAG logic with multi-layer fallback
+│   └── ingest.py                   # PDF ingestion & vector store creation
+│
+├── data/                           # Data & Vector Store
+│   └── vectorstore/                # ChromaDB persistent database
+│       ├── chroma.sqlite3
+│       └── [embeddings collections]
+│
+├── inference.py                    # Batch inference script
+├── eval_script.py                  # Metrics evaluation (Hit Rate, MRR, Latency)
+├── public_test_set.json            # 10 sample queries for validation
+└── keyword_results.json            # Evaluation results
+```
 ```
 
 ## Usage Instructions
@@ -186,14 +249,37 @@ The eval_script will output:
 
 ## Technologies & Dependencies
 
-- **Python 3.8+**
-- **LangChain**: Orchestration framework
-- **ChromaDB**: Vector database
-- **Streamlit**: Web UI framework
-- **HuggingFace Transformers**: Embeddings model
-- **Groq API**: LLM inference (Llama 3.1 8B)
-- **PyMuPDF**: PDF parsing
-- See `requirements.txt` for complete list
+**Frontend:**
+- React 18+
+- Node.js 14+
+- Axios (HTTP client)
+- CSS3 with responsive design
+
+**Backend:**
+- Python 3.9+
+- FastAPI (REST API framework)
+- Uvicorn (ASGI server)
+- LangChain (Orchestration)
+- ChromaDB (Vector database)
+- HuggingFace Transformers (Embeddings)
+- Groq API (LLM - Llama 3.1 8B)
+- PyMuPDF (PDF parsing)
+
+**Deployment:**
+- Vercel (Frontend)
+- Render (Backend)
+- GitHub (Version control)
+
+See `requirements.txt` and `frontend/package.json` for complete dependency lists
+
+## Deployment Guide
+
+For production deployment instructions, see [DEPLOYMENT.md](DEPLOYMENT.md).
+
+**Quick Summary:**
+- **Frontend:** Deploy to Vercel from GitHub
+- **Backend:** Deploy to Render with `GROQ_API_KEY` environment variable
+- **Live URLs:** Update API endpoint in frontend after backend deployment
 
 ## Team & Acknowledgements
 
@@ -204,10 +290,11 @@ The eval_script will output:
 **Objective:** Automating BIS Standard Discovery for Micro and Small Enterprises (MSEs)
 
 **Technology Stack:**
-- Vector search powered by ChromaDB
-- Semantic embeddings from HuggingFace
-- Ultra-fast LLM inference via Groq API
-- Production-grade UI with Streamlit
+- Full-stack: React.js + FastAPI
+- Vector search: ChromaDB
+- Semantic embeddings: HuggingFace
+- LLM inference: Groq API (Llama 3.1 8B)
+- Deployment: Vercel + Render
 
 **Acknowledgements:**
 - Bureau of Indian Standards (BIS) for the comprehensive standards dataset
@@ -217,5 +304,6 @@ The eval_script will output:
 
 ---
 
-**Status:** Hackathon Submission Ready  
-**Last Updated:** May 2, 2026
+**Status:** Production Ready  
+**GitHub:** https://github.com/sazzysara/BIS-Standard-Discovery  
+**Last Updated:** May 4, 2026
