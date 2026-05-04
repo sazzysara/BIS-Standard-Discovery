@@ -24,8 +24,8 @@ function App() {
     setResults(null);
 
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-      const response = await axios.post(`${apiUrl}/api/discover`, {
+      const apiUrl = process.env.REACT_APP_API_URL || '/api';
+      const response = await axios.post(`${apiUrl}/discover`, {
         description: description
       });
 
