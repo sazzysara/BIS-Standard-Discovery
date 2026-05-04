@@ -22,6 +22,24 @@ npm start
 
 The app will open at `http://localhost:3000`
 
+### Environment Configuration
+
+By default, the app connects to `http://localhost:8000` (local FastAPI backend).
+
+For production or custom backend URLs, create a `.env` file in the `frontend/` directory:
+
+```bash
+# .env (for production backend)
+REACT_APP_API_URL=https://bis-backend-xxxxx.onrender.com
+```
+
+See `.env.example` for reference.
+
+Then rebuild and deploy:
+```bash
+npm run build
+```
+
 ### Build for Production
 
 ```bash
